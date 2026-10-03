@@ -29,37 +29,32 @@ services:
     # Official MinIO images are no longer published; pgsty/minio is a community build of
     # the same server (decision 2026-10-04, PK-004).
     image: ${REGISTRY_MIRROR:-docker.io}/pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-    command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:?set in .env}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:?set in .env}
+      S3_BUCKET: ${S3_BUCKET:?set in .env}
+    # Starts the server, then creates the default bucket. Done here rather than in a one-shot
+    # container so `docker compose up --wait` succeeds (it fails on any exited container).
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        minio server /data --console-address :9001 & pid=$$!;
+        trap 'kill $$pid' TERM INT;
+        until curl -fsS http://localhost:9000/minio/health/live >/dev/null 2>&1; do sleep 1; done;
+        mc alias set local http://localhost:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null &&
+        mc mb --ignore-existing "local/$$S3_BUCKET";
+        wait $$pid
     ports:
       - "${S3_PORT:-9000}:9000"
       - "${S3_CONSOLE_PORT:-9001}:9001"
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      # Healthy only once the default bucket exists.
+      test: ["CMD-SHELL", 'mc ls "local/$${S3_BUCKET}" >/dev/null 2>&1']
       interval: 5s
       timeout: 3s
-      retries: 20
-
-  # One-shot job: creates the default bucket once MinIO is healthy, then exits.
-  minio-init:
-    image: ${REGISTRY_MIRROR:-docker.io}/pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?set in .env}
-      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?set in .env}
-      S3_BUCKET: ${S3_BUCKET:?set in .env}
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - >-
-        mc alias set local http://minio:9000 "$$S3_ACCESS_KEY_ID" "$$S3_SECRET_ACCESS_KEY" &&
-        mc mb --ignore-existing "local/$$S3_BUCKET"
-    restart: "no"
+      retries: 30
 
   # --- The app image against this stack: `docker compose --profile image up --build` ---
   # Same image, three commands (Tech §2.7). Hosts point at the compose services.
@@ -94,8 +89,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-      minio-init:
-        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
 
   worker:
     profiles: ["image"]
