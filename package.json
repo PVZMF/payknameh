@@ -24,7 +24,9 @@
     "test:unit": "vitest run --project unit",
     "test:int": "vitest run --project integration",
     "test:coverage": "vitest run --coverage",
-    "worker": "tsx --conditions=react-server --env-file-if-exists=.env worker.ts"
+    "worker": "tsx --conditions=react-server --env-file-if-exists=.env worker.ts",
+    "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
+    "e2e": "pnpm test:e2e"
   },
   "dependencies": {
     "drizzle-orm": "0.45.3",
@@ -40,6 +42,7 @@
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
+    "@playwright/test": "1.63.0",
     "@types/node": "22.20.5",
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
