@@ -80,6 +80,7 @@ export default tseslint.config(
   {
     ignores: [
       ".next/**",
+      "dist/**",
       "node_modules/**",
       "coverage/**",
       "playwright-report/**",

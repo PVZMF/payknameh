@@ -7,3 +7,4 @@ templates/*/*/
 docs/specs/
 CLAUDE.md
 .env.example
+dist/

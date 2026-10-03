@@ -61,6 +61,55 @@ services:
         mc mb --ignore-existing "local/$$S3_BUCKET"
     restart: "no"
 
+  # --- The app image against this stack: `docker compose --profile image up --build` ---
+  # Same image, three commands (Tech §2.7). Hosts point at the compose services.
+  migrate:
+    profiles: ["image"]
+    image: payknameh:local
+    build: &app-build
+      context: .
+      args:
+        REGISTRY_MIRROR: ${REGISTRY_MIRROR:-docker.io}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
+        APP_COMMIT: ${APP_COMMIT:-unknown}
+    command: ["node", "dist/migrate.mjs"]
+    env_file: .env
+    environment: &image-env
+      DB_URL: postgres://${DB_APP_USER}:${DB_APP_PASSWORD}@postgres:5432/${DB_NAME}
+      DB_MIGRATE_URL: postgres://${DB_MIGRATOR_USER}:${DB_MIGRATOR_PASSWORD}@postgres:5432/${DB_NAME}
+      S3_ENDPOINT: http://minio:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    profiles: ["image"]
+    image: payknameh:local
+    build: *app-build
+    env_file: .env
+    environment: *image-env
+    ports:
+      - "${APP_IMAGE_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+
+  worker:
+    profiles: ["image"]
+    image: payknameh:local
+    build: *app-build
+    command: ["node", "dist/worker.mjs"]
+    env_file: .env
+    environment: *image-env
+    ports:
+      - "${WORKER_IMAGE_PORT:-3001}:3001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   postgres-data:
   minio-data:

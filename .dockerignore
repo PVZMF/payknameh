@@ -1,0 +1,15 @@
+.git
+.husky
+node_modules
+.next
+dist
+coverage
+playwright-report
+test-results
+.env
+.env.*
+!.env.example
+docs
+tests
+*.log
+.DS_Store

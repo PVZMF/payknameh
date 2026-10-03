@@ -66,3 +66,18 @@ REGISTRY_MIRROR=docker.arvancloud.ir
 ```
 
 ایمیج‌های رسمی MinIO دیگر منتشر نمی‌شوند؛ از `pgsty/minio` استفاده می‌کنیم که نسخه‌ی جامعه‌ی همان سرور MinIO است.
+
+## اجرای ایمیج Docker روی همین محیط
+
+برنامه و worker از یک ایمیج ساخته می‌شوند و فقط فرمان اجرا فرق دارد (Tech §2.7):
+
+```bash
+APP_COMMIT=$(git rev-parse --short HEAD) docker compose --profile image up --build -d
+curl localhost:3000/health   # app
+curl localhost:3001/health   # worker
+docker compose --profile image down
+```
+
+سرویس `migrate` اول اجرا می‌شود و بعد `app` و `worker` بالا می‌آیند. اگر `pnpm dev` یا `pnpm worker` هم‌زمان در حال اجراست، `APP_IMAGE_PORT` و `WORKER_IMAGE_PORT` را در `.env` عوض کنید.
+
+برای ساخت از آینه‌ها، `REGISTRY_MIRROR` و `NPM_REGISTRY` را در `.env` تنظیم کنید؛ هر دو به `docker build` داده می‌شوند.
