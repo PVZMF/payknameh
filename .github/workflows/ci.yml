@@ -1,0 +1,194 @@
+# Tech §13.3 / Standards §6: every PR must be fully green before merge.
+# Node comes from .nvmrc and pnpm from package.json "packageManager".
+# Actions are pinned to commit SHAs (supply chain); Renovate (PK-021) will keep them fresh.
+# Every job here is a required status check on main and develop.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  HUSKY: "0"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  commitlint:
+    name: Commit messages
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Squash merge makes the PR title the final commit message (Standards §6).
+      - name: PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint
+      - name: Commits
+        run: >-
+          pnpm exec commitlint
+          --from ${{ github.event.pull_request.base.sha }}
+          --to ${{ github.event.pull_request.head.sha }}
+
+  verify:
+    name: Lint, typecheck, build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Sample values only; no secrets in CI (Standards §3).
+      - run: cp .env.example .env
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm build:worker
+
+  coverage:
+    name: coverage
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read # download the develop baseline artifact
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_PASSWORD: postgres-ci-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPASSWORD: postgres-ci-only
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0 # diff-cover compares against the base branch
+      # A PR that only touches docs/ has no code to cover; the job still reports success.
+      - name: Detect docs-only change
+        id: scope
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] &&
+             ! git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -v '^docs/' | grep -q .; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Only docs/ changed; skipping tests and coverage."
+          fi
+      - if: steps.scope.outputs.docs_only != 'true'
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - if: steps.scope.outputs.docs_only != 'true'
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: steps.scope.outputs.docs_only != 'true'
+        run: pnpm install --frozen-lockfile && cp .env.example .env
+      # Same roles as local: migrator owns the schema, the app user has no DDL (Standards §7).
+      - name: Create database roles
+        if: steps.scope.outputs.docs_only != 'true'
+        run: set -a && . ./.env && set +a && sh docker/postgres/init-roles.sh
+      # Standards §7: every migration is tested on an empty database.
+      - name: Migrations on an empty database
+        if: steps.scope.outputs.docs_only != 'true'
+        run: pnpm db:migrate
+      # Unit + integration; fails under 90% for src/domain and src/server (vitest.config.ts).
+      - name: Tests with coverage thresholds
+        if: steps.scope.outputs.docs_only != 'true'
+        run: pnpm test:coverage
+      - name: Patch coverage on changed lines (≥ 80%)
+        if: github.event_name == 'pull_request' && steps.scope.outputs.docs_only != 'true'
+        run: |
+          pipx run --spec diff-cover==10.6.0 diff-cover coverage/lcov.info --compare-branch="origin/${{ github.base_ref }}" --fail-under=80
+      - name: Download develop coverage baseline
+        if: github.event_name == 'pull_request' && steps.scope.outputs.docs_only != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh run list --workflow ci.yml --branch develop --event push --status success \
+            --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$run_id" ]; then
+            gh run download "$run_id" --name coverage-baseline --dir baseline || true
+          fi
+      - name: Total coverage drop vs develop (≤ 0.5 pp)
+        if: github.event_name == 'pull_request' && steps.scope.outputs.docs_only != 'true'
+        run: node scripts/coverage-compare.mjs baseline/coverage-summary.json coverage/coverage-summary.json
+      # Every merge to develop publishes the new baseline.
+      - name: Upload develop coverage baseline
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-baseline
+          path: coverage/coverage-summary.json
+          retention-days: 90
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_PASSWORD: postgres-ci-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPASSWORD: postgres-ci-only
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cp .env.example .env
+      - run: set -a && . ./.env && set +a && sh docker/postgres/init-roles.sh
+      - run: pnpm db:migrate
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  image:
+    name: Docker image builds
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          push: false
+          build-args: |
+            APP_COMMIT=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
