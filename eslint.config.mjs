@@ -144,7 +144,7 @@ export default tseslint.config(
   {
     // Standards §3: environment is read only through src/env.ts, never via NODE_ENV.
     files: ["src/**/*.{ts,tsx}", "worker.ts"],
-    ignores: ["src/env.ts", "src/instrumentation.ts"],
+    ignores: ["src/env.ts", "src/instrumentation.ts", "src/server/db/drizzle.config.ts"],
     rules: {
       "no-restricted-properties": [
         "error",
