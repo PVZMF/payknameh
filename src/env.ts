@@ -17,6 +17,13 @@ export const envSchema = z.object({
   APP_ENV: z.enum(APP_ENVS),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 
+  // APP_: build identity shown in /health and X-App-Version (Standards §5). The commit is
+  // baked into the Docker image; locally it falls back to `git rev-parse`.
+  APP_COMMIT: z.string().min(1).optional(),
+
+  // WORKER_: the worker's own /health listener (Tech §13.6).
+  WORKER_HEALTH_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
+
   // DB_: the app connects with the least-privilege user (Tech §12).
   DB_URL: postgresUrl,
 

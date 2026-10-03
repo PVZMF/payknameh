@@ -42,16 +42,17 @@ const allowEnv = (from) => ({
 
 const LAYER_POLICIES = [
   allow("domain", ["domain"]),
-  allow("db", ["domain", "server-lib"]),
+  allow("db", ["domain", "server-lib", "db"]),
   allow("provider", ["domain", "server-lib"]),
-  allow("server-lib", ["domain"]),
+  // server-lib holds cross-cutting infra (logger, queue, health); health reads the DB pool.
+  allow("server-lib", ["domain", "db", "server-lib"]),
   allow("service", ["domain", "db", "provider", "server-lib"]),
-  allow("job", ["service", "domain", "server-lib"]),
+  allow("job", ["service", "domain", "server-lib", "job"]),
   {
     from: { file: { categories: "worker" } },
     allow: {
       to: [
-        { element: { types: { anyOf: ["job", "server-lib"] } } },
+        { element: { types: { anyOf: ["job", "server-lib", "db"] } } },
         { file: { categories: "env" } },
       ],
     },

@@ -44,3 +44,9 @@ pnpm db:seed                           # داده‌ی نمونه (از PK-037)
 - فقط expand: ستون یا جدول جدید nullable یا با مقدار پیش‌فرض؛ حذف و تغییر نام فقط با الگوی expand/contract در چند انتشار.
 - مایگریشن قبل از کد جدید و به‌صورت مرحله‌ی جدا اجرا می‌شود و هرگز به عقب برنمی‌گردد.
 - هر تغییر مدل داده در `docs/modules/<module>/data-model.md` همان PR ثبت می‌شود.
+
+## صف کارها (pg-boss)
+
+- `pnpm db:migrate` بعد از مایگریشن‌های Drizzle، schema‌ی `pgboss` و همه‌ی صف‌های فهرست `QUEUES` در `src/server/lib/queue.ts` را با کاربر مایگریشن می‌سازد؛ worker و برنامه با `migrate: false` اجرا می‌شوند (Tech §7.5).
+- نام صف `module.verb` است. سیاست هر صف بعد از ساخت ثابت است؛ تغییر آن یعنی صف با نام تازه.
+- volumeهایی که پیش از PK-008 ساخته شده‌اند حق USAGE روی schemaهای تازه را ندارند؛ یک‌بار `docker compose down -v` اجرا کنید.

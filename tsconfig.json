@@ -17,8 +17,13 @@
     "noEmit": true,
     "esModuleInterop": true,
     "incremental": true,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
+      "@/package.json": ["./package.json"],
       "@/*": ["./src/*"]
     }
   },
