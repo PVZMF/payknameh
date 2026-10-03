@@ -142,6 +142,21 @@ export default tseslint.config(
     },
   },
   {
+    // Standards §3: environment is read only through src/env.ts, never via NODE_ENV.
+    files: ["src/**/*.{ts,tsx}", "worker.ts"],
+    ignores: ["src/env.ts", "src/instrumentation.ts"],
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "process",
+          property: "env",
+          message: "Read configuration through getEnv() from @/env.",
+        },
+      ],
+    },
+  },
+  {
     // Standards §2: console is allowed in scripts only.
     files: ["scripts/**"],
     rules: { "no-console": "off" },
