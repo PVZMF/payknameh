@@ -15,6 +15,7 @@ const postgresUrl = z
 /** Every variable the app and worker read. A missing or invalid value stops startup. */
 export const envSchema = z.object({
   APP_ENV: z.enum(APP_ENVS),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 
   // DB_: the app connects with the least-privilege user (Tech §12).
   DB_URL: postgresUrl,
