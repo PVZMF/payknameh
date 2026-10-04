@@ -19,3 +19,21 @@ test("health endpoint is up with version and commit", async ({ request }) => {
     commit: expect.any(String),
   });
 });
+
+test("loads Vazirmatn from our own origin, with no third-party requests", async ({
+  page,
+  baseURL,
+}) => {
+  const origin = new URL(baseURL ?? "http://localhost").origin;
+  const foreign: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).origin !== origin) foreign.push(request.url());
+  });
+
+  await page.goto("/");
+  await page.evaluate(() => document.fonts.ready);
+
+  expect(foreign).toEqual([]);
+  const fontFamily = await page.locator("body").evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(fontFamily.toLowerCase()).toContain("vazirmatn");
+});
