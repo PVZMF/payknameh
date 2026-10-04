@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# build
+dist/
+build/
+*.tsbuildinfo
+
+# env — only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# tests
+coverage/
+test-results/
+playwright-report/
+blob-report/
+
+# os / editor
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea/
