@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Tech §12: automatic dependency updates. PRs target develop like any other work (Standards §4) and are grouped so each PR title stays a valid commit header (≤ 72 characters).",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "baseBranchPatterns": ["develop"],
+  "timezone": "Asia/Tehran",
+  "schedule": ["before 9am on saturday"],
+  "rangeStrategy": "pin",
+  "minimumReleaseAge": "3 days",
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "prConcurrentLimit": 5,
+  "dependencyDashboard": true,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on saturday"]
+  },
+  "packageRules": [
+    {
+      "description": "One PR for every non-major npm update.",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "non-major dependencies"
+    },
+    {
+      "description": "Major updates one by one, but with a short title.",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["major"],
+      "commitMessageTopic": "{{depName}}",
+      "commitMessageExtra": "to v{{newMajor}}"
+    },
+    {
+      "description": "GitHub Actions stay pinned to commit SHAs, updated together.",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Runtime pins move together: .nvmrc, packageManager and the Docker base image.",
+      "matchManagers": ["nvm", "dockerfile"],
+      "matchPackageNames": ["node", "library/node"],
+      "groupName": "Node.js runtime"
+    },
+    {
+      "description": "typescript-eslint supports TypeScript < 6.1 only.",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<6.1"
+    },
+    {
+      "description": "eslint-plugin-react does not support ESLint 10 yet.",
+      "matchPackageNames": ["eslint"],
+      "allowedVersions": "<10"
+    },
+    {
+      "description": "lint-staged 17 needs Node >= 22.22.1; the runtime is pinned to 22.21.",
+      "matchPackageNames": ["lint-staged"],
+      "allowedVersions": "<17"
+    }
+  ]
+}
