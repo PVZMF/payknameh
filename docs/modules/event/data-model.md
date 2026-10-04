@@ -28,3 +28,7 @@ refs: [MVP §2, MVP §5, Tech §7.2, Tech §8, Business §9.1]
 | `archived_at`، `purge_scheduled_at` | timestamptz           | فقط بایگانی ذخیره می‌شود؛ فعال یا نگه‌داشته محاسبه می‌شود (Tech §8)                          |
 | `version`                           | integer               | پیش‌فرض 1؛ قفل خوش‌بینانه (Tech §7.2)                                                        |
 | `created_at`، `updated_at`          | timestamptz           |                                                                                              |
+
+## ساخت رویداد (PK-033)
+
+`createEvent(actor, input)` در `src/server/services/event`: فقط میزبان؛ رویداد در سازمان شخصی او ساخته می‌شود و سازنده در همان تراکنش OWNER می‌شود. ورودی با `createEventSchema` (`src/domain/event/event.ts`) در هر ورودی سیستم پارس می‌شود: عنوان الزامی (حداکثر ۱۲۰)، نام عروس و داماد و والدین اختیاری (خالی = null)، نوع پیش‌فرض WEDDING، منطقه‌ی زمانی پیش‌فرض `Asia/Tehran` و فقط منطقه‌ی IANA معتبر.
