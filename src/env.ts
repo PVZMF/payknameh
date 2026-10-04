@@ -31,8 +31,8 @@ const postgresUrl = z
   .url({ protocol: /^postgres(ql)?$/ })
   .describe("postgres://user:password@host:port/database");
 
-/** Every variable the app and worker read. A missing or invalid value stops startup. */
-export const envSchema = z.object({
+/** Each variable on its own. A missing or invalid value stops startup. */
+const baseEnvSchema = z.object({
   APP_ENV: z.enum(APP_ENVS),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 
@@ -56,6 +56,10 @@ export const envSchema = z.object({
   DOMAIN_APP: host,
   DOMAIN_SHORT: host,
 
+  // SMS_: provider behind the SmsProvider interface (Tech §7.8). Only "console" exists until
+  // the vendor is chosen (Decision D-06, PK-036).
+  SMS_PROVIDER: z.enum(["console"]).default("console"),
+
   // DB_: the app connects with the least-privilege user (Tech §12).
   DB_URL: postgresUrl,
 
@@ -65,6 +69,22 @@ export const envSchema = z.object({
   S3_BUCKET: z.string().min(1),
   S3_ACCESS_KEY_ID: z.string().min(1),
   S3_SECRET_ACCESS_KEY: z.string().min(1),
+});
+
+/** Every variable the app and worker read, plus rules that span several variables. */
+export const envSchema = baseEnvSchema.superRefine((env, ctx) => {
+  // Standards §3: the console provider (codes in the terminal) only runs locally and on the
+  // development environment; staging and production must send real SMS.
+  if (
+    env.SMS_PROVIDER === "console" &&
+    (env.APP_ENV === "staging" || env.APP_ENV === "production")
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["SMS_PROVIDER"],
+      message: `"console" is only allowed when APP_ENV is local or development`,
+    });
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

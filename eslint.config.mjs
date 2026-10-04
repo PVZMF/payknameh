@@ -43,7 +43,8 @@ const allowEnv = (from) => ({
 const LAYER_POLICIES = [
   allow("domain", ["domain"]),
   allow("db", ["domain", "server-lib", "db"]),
-  allow("provider", ["domain", "server-lib"]),
+  // Providers format user-facing SMS text, which lives in strings (Standards §2).
+  allow("provider", ["domain", "server-lib", "strings"]),
   // server-lib holds cross-cutting infra (logger, queue, health); health reads the DB pool.
   allow("server-lib", ["domain", "db", "server-lib"]),
   allow("service", ["domain", "db", "provider", "server-lib"]),

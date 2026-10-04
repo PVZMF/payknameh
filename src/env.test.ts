@@ -19,7 +19,7 @@ describe("parseEnv", () => {
     expect(parseEnv(envSchema, VALID).APP_ENV).toBe("local");
   });
 
-  it.each(["local", "development", "staging", "production"])("accepts APP_ENV=%s", (appEnv) => {
+  it.each(["local", "development"])("accepts APP_ENV=%s", (appEnv) => {
     expect(parseEnv(envSchema, { ...VALID, APP_ENV: appEnv }).APP_ENV).toBe(appEnv);
   });
 
@@ -78,6 +78,17 @@ describe("parseEnv", () => {
     expect(() => parseEnv(envSchema, { ...VALID, GLITCHTIP_DSN: "glitchtip" })).toThrow(
       /GLITCHTIP_DSN/,
     );
+  });
+
+  it("defaults to the console SMS provider and allows it locally and on development", () => {
+    expect(parseEnv(envSchema, VALID).SMS_PROVIDER).toBe("console");
+    expect(parseEnv(envSchema, { ...VALID, APP_ENV: "development" }).SMS_PROVIDER).toBe("console");
+  });
+
+  it.each(["staging", "production"])("refuses the console SMS provider on %s", (appEnv) => {
+    expect(() =>
+      parseEnv(envSchema, { ...VALID, APP_ENV: appEnv, SMS_PROVIDER: "console" }),
+    ).toThrow(/SMS_PROVIDER/);
   });
 
   it("validates the migration user URL separately", () => {
