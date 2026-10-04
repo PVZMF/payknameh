@@ -36,6 +36,40 @@ export const users = pgTable(
   ],
 );
 
+/** Tech §8 AuditLog: who acted. GUEST acts through a household token. */
+export const auditActorType = pgEnum("audit_actor_type", ["HOST", "GUEST", "STAFF", "SYSTEM"]);
+
+/**
+ * Tech §8, §11; Business §7: append-only record of sensitive actions. Rows hold IDs only, no
+ * names or phone numbers. A trigger (migration 0003) rejects UPDATE, DELETE and TRUNCATE.
+ * event_id has no foreign key on purpose: deleting an event must neither rewrite nor block
+ * its audit rows.
+ */
+export const auditLogs = pgTable(
+  "audit_logs",
+  {
+    id: id(),
+    actorType: auditActorType().notNull(),
+    actorId: uuid(),
+    /** module.verb-in-past, e.g. guest.token-rotated (same shape as job names). */
+    action: text().notNull(),
+    entityType: text().notNull(),
+    entityId: uuid(),
+    eventId: uuid(),
+    reason: text(),
+    createdAt: timestamptz().notNull().defaultNow(),
+  },
+  (table) => [
+    index("audit_logs_event_id_created_at_idx").on(table.eventId, table.createdAt),
+    check("audit_logs_action_format", sql`${table.action} ~ '^[a-z]+\\.[a-z][a-z-]*$'`),
+    // Tech §11: team members reach event details only with a recorded reason.
+    check(
+      "audit_logs_staff_reason",
+      sql`${table.actorType} <> 'STAFF' OR btrim(coalesce(${table.reason}, '')) <> ''`,
+    ),
+  ],
+);
+
 /** Who belongs to which organization (user decision 2026-10-05, ready for B2B teams). */
 export const organizationMembers = pgTable(
   "organization_members",

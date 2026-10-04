@@ -5,6 +5,10 @@ import { getEnv } from "@/env";
 import * as schema from "@/server/db/schema";
 
 export type Database = NodePgDatabase<typeof schema>;
+/** A transaction handed to `db.transaction(async (tx) => …)`. */
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+/** Either the shared client or an open transaction, for writes that must join the caller's. */
+export type DbExecutor = Database | Transaction;
 
 let pool: Pool | undefined;
 let db: Database | undefined;
