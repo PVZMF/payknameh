@@ -5,9 +5,13 @@ vi.mock("next/headers", () => ({ cookies: () => Promise.resolve(store) }));
 const resolveSession = vi.fn();
 vi.mock("@/server/services/auth", () => ({ resolveSession }));
 let appEnv = "local";
+const redirect = vi.fn((path: string) => {
+  throw new Error(`redirect:${path}`);
+});
+vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/env", () => ({ getEnv: () => ({ APP_ENV: appEnv }) }));
 
-const { SESSION_COOKIE, clearSessionCookie, getCurrentUser, setSessionCookie } =
+const { SESSION_COOKIE, clearSessionCookie, getCurrentUser, requireHost, setSessionCookie } =
   await import("@/app/_lib/auth");
 
 beforeEach(() => {
@@ -46,6 +50,17 @@ describe("session cookie", () => {
     });
     const options = store.set.mock.calls[0]?.[2] as Record<string, unknown>;
     expect(options).not.toHaveProperty("domain");
+  });
+
+  it("turns a valid session into a host actor", async () => {
+    store.get.mockReturnValue({ value: "token-3" });
+    resolveSession.mockResolvedValue({ userId: "u3", sessionId: "s3" });
+    expect(await requireHost()).toEqual({ type: "host", userId: "u3" });
+  });
+
+  it("sends a request without a session to the login page", async () => {
+    store.get.mockReturnValue(undefined);
+    await expect(requireHost()).rejects.toThrow("redirect:/login");
   });
 
   it("clears the cookie", async () => {
