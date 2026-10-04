@@ -5,6 +5,11 @@ import { PgBoss } from "pg-boss";
 import { getEnv } from "@/env";
 import { closeDb } from "@/server/db/client";
 import { registerJobs } from "@/server/jobs";
+import {
+  captureUnexpected,
+  flushErrorReports,
+  initErrorTracking,
+} from "@/server/lib/error-tracking";
 import { checkHealth } from "@/server/lib/health";
 import { getLogger } from "@/server/lib/logger";
 import { QUEUE_SCHEMA } from "@/server/lib/queue";
@@ -13,6 +18,7 @@ const log = getLogger("worker");
 
 async function main(): Promise<void> {
   const env = getEnv();
+  initErrorTracking("worker");
 
   const boss = new PgBoss({
     connectionString: env.DB_URL,
@@ -23,7 +29,10 @@ async function main(): Promise<void> {
     // Index rebuilds need table ownership, which only the migrator has.
     reindex: false,
   });
-  boss.on("error", (error) => log.error({ err: error }, "pg-boss error"));
+  boss.on("error", (error) => {
+    log.error({ err: error }, "pg-boss error");
+    captureUnexpected(error, { source: "pg-boss" });
+  });
   await boss.start();
   await registerJobs(boss);
 
@@ -49,13 +58,16 @@ async function main(): Promise<void> {
     server.close();
     await boss.stop({ graceful: true, timeout: 20_000 });
     await closeDb();
+    await flushErrorReports();
     process.exit(0);
   };
   process.once("SIGTERM", () => void shutdown("SIGTERM"));
   process.once("SIGINT", () => void shutdown("SIGINT"));
 }
 
-main().catch((error: unknown) => {
+main().catch(async (error: unknown) => {
   log.fatal({ err: error }, "worker failed to start");
+  captureUnexpected(error, { phase: "start" });
+  await flushErrorReports();
   process.exit(1);
 });

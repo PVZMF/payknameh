@@ -32,6 +32,7 @@
     "postbuild": "node -e \"const fs=require('fs');fs.cpSync('.next/static','.next/standalone/.next/static',{recursive:true});if(fs.existsSync('public'))fs.cpSync('public','.next/standalone/public',{recursive:true})\""
   },
   "dependencies": {
+    "@sentry/node": "11.4.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.3",
