@@ -14,10 +14,12 @@ refs: [Standards §2, Tech §3.2, Tech §3.5]
 
 ## کامپوننت‌ها و کد کپی‌شده در مخزن
 
-| جزء           | مسیر در مخزن                   | منبع                      | مجوز | کارت   |
-| ------------- | ------------------------------ | ------------------------- | ---- | ------ |
-| Button        | `src/ui/components/button.tsx` | shadcn/ui (new-york, rtl) | MIT  | PK-019 |
-| `cn()` helper | `src/ui/lib/utils.ts`          | shadcn/ui                 | MIT  | PK-019 |
+| جزء           | مسیر در مخزن                   | منبع                              | مجوز | کارت   |
+| ------------- | ------------------------------ | --------------------------------- | ---- | ------ |
+| Button        | `src/ui/components/button.tsx` | shadcn/ui (new-york, rtl)         | MIT  | PK-019 |
+| `cn()` helper | `src/ui/lib/utils.ts`          | shadcn/ui                         | MIT  | PK-019 |
+| Input         | `src/ui/components/input.tsx`  | shadcn/ui (new-york)              | MIT  | PK-030 |
+| Label         | `src/ui/components/label.tsx`  | shadcn/ui (new-york, Radix Label) | MIT  | PK-030 |
 
 ## فونت
 
