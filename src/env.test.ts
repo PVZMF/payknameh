@@ -3,6 +3,9 @@ import { EnvValidationError, envSchema, migrationEnvSchema, parseEnv } from "@/e
 
 const VALID = {
   APP_ENV: "local",
+  DOMAIN_MAIN: "payknameh.localhost:3000",
+  DOMAIN_APP: "app.payknameh.localhost:3000",
+  DOMAIN_SHORT: "pk.localhost:3000",
   DB_URL: "postgres://payknameh_app:secret@localhost:5432/payknameh",
   S3_ENDPOINT: "http://localhost:9000",
   S3_REGION: "us-east-1",
@@ -48,6 +51,24 @@ describe("parseEnv", () => {
 
   it("throws on an APP_VERSION that is not X.Y.Z or X.Y.Z-rc.N", () => {
     expect(() => parseEnv(envSchema, { ...VALID, APP_VERSION: "v0.1.0" })).toThrow(/APP_VERSION/);
+  });
+
+  it.each(["payknameh.ir", "app.payknameh.ir", "pk.ir", "app.payknameh.localhost:3000"])(
+    "accepts the host %s",
+    (host) => {
+      expect(parseEnv(envSchema, { ...VALID, DOMAIN_APP: host }).DOMAIN_APP).toBe(host);
+    },
+  );
+
+  it.each([
+    "https://payknameh.ir",
+    "App.payknameh.ir",
+    "payknameh.ir/",
+    "-bad.ir",
+    "",
+    "localhost:3000",
+  ])("rejects the host %j", (host) => {
+    expect(() => parseEnv(envSchema, { ...VALID, DOMAIN_SHORT: host })).toThrow(/DOMAIN_SHORT/);
   });
 
   it("validates the migration user URL separately", () => {

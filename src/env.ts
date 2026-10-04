@@ -11,6 +11,17 @@ export type AppEnv = (typeof APP_ENVS)[number];
 /** X.Y.Z or X.Y.Z-rc.N: the only shapes an app build may report (Standards §5). */
 export const APP_VERSION_PATTERN = /^\d+\.\d+\.\d+(-rc\.[1-9]\d*)?$/;
 
+const host = z
+  .string()
+  .regex(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*(:\d{1,5})?$/, {
+    message: "expected a lower-case host name, optionally with :port",
+  })
+  // Next.js uses localhost:<port> as its own host and makes redirects to it relative, which
+  // breaks cross-surface redirects; use a *.localhost name locally instead.
+  .refine((value) => !/^localhost(:\d+)?$/.test(value), {
+    message: "use a *.localhost name (e.g. payknameh.localhost:3000), not localhost itself",
+  });
+
 const postgresUrl = z
   .url({ protocol: /^postgres(ql)?$/ })
   .describe("postgres://user:password@host:port/database");
@@ -32,6 +43,12 @@ export const envSchema = z.object({
 
   // WORKER_: the worker's own /health listener (Tech §13.6).
   WORKER_HEALTH_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
+
+  // DOMAIN_: hosts of the three surfaces (Tech §2.3), with the port when it is not the default.
+  // The short .ir domain is still open (Decision D-07); every environment sets its own.
+  DOMAIN_MAIN: host,
+  DOMAIN_APP: host,
+  DOMAIN_SHORT: host,
 
   // DB_: the app connects with the least-privilege user (Tech §12).
   DB_URL: postgresUrl,
