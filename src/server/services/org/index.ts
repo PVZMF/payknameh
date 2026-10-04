@@ -4,3 +4,4 @@ export {
   type AuditActorType,
   type AuditEntry,
 } from "@/server/services/org/record-audit";
+export { ensureHostAccount } from "@/server/services/org/ensure-host-account";

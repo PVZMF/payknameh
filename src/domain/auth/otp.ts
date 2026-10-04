@@ -16,3 +16,18 @@ export const OTP_REQUEST_LIMITS = {
 } as const;
 
 export type RequestOtpError = "PHONE_INVALID" | "OTP_RATE_LIMITED" | "SMS_SEND_FAILED";
+
+/**
+ * Tech §7.6: OTP verify is limited per challenge (OTP_MAX_ATTEMPTS) and per phone, across all
+ * of its challenges.
+ */
+export const OTP_VERIFY_LIMITS = {
+  phoneHourly: { name: "otp-verify-phone-hourly", limit: 15, windowSeconds: 3_600 },
+} as const;
+
+/** OTP_INVALID covers wrong, unknown and already-used codes alike, so nothing is revealed. */
+export type VerifyOtpError =
+  "OTP_INVALID" | "OTP_EXPIRED" | "OTP_ATTEMPTS_EXCEEDED" | "OTP_RATE_LIMITED";
+
+/** Tech §7.3: 30-day sliding session. */
+export const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60;
