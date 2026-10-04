@@ -52,6 +52,14 @@ describe("redact", () => {
     expect(out.err.type).toBe("Error");
     expect(out.err.message).not.toContain("1234567");
     expect(out.err.stack).toBeTypeOf("string");
+    expect(out.err.stack).not.toContain("1234567");
+  });
+
+  it("keeps an error without a stack", () => {
+    const error = new Error("boom");
+    delete error.stack;
+    const out = redact(error) as { stack?: string };
+    expect(out.stack).toBeUndefined();
   });
 
   it("stops at a fixed depth instead of walking huge or cyclic objects", () => {

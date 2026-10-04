@@ -48,7 +48,12 @@ export function redact(value: unknown, depth = 0): unknown {
   if (typeof value === "string") return redactString(value);
   if (Array.isArray(value)) return value.map((item) => redact(item, depth + 1));
   if (value instanceof Error) {
-    return { type: value.name, message: redactString(value.message), stack: value.stack };
+    // The stack's first line repeats the message, so it needs the same masking.
+    return {
+      type: value.name,
+      message: redactString(value.message),
+      stack: value.stack === undefined ? undefined : redactString(value.stack),
+    };
   }
   if (value === null || typeof value !== "object") return value;
 
