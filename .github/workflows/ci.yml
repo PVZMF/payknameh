@@ -1,6 +1,6 @@
 # Tech §13.3 / Standards §6: every PR must be fully green before merge.
 # Node comes from .nvmrc and pnpm from package.json "packageManager".
-# Actions are pinned to commit SHAs (supply chain); Renovate (PK-021) will keep them fresh.
+# Actions are pinned to commit SHAs (supply chain); Renovate keeps them fresh (renovate.json).
 # Every job here is a required status check on main and develop.
 name: CI
 
@@ -67,6 +67,28 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm build:worker
+
+  # Tech §12: vulnerability scanning in CI. Reads the lockfile only, no install needed.
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+      # What ships in the image: any high or critical advisory blocks the merge.
+      - name: Production dependencies (high and critical fail)
+        run: pnpm audit --prod --audit-level=high
+      # Build and test tools never reach the image; advisories here are reported, and
+      # Renovate picks up the fix once one is published.
+      - name: Development dependencies (reported only)
+        run: |
+          if ! pnpm audit --dev --audit-level=high > audit-dev.txt; then
+            echo "::warning title=Dev dependency advisories::high or critical advisories in development dependencies; see the job summary"
+            { echo '### Development dependency advisories'; echo '```'; cat audit-dev.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   coverage:
     name: coverage
