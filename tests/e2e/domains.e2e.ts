@@ -16,10 +16,12 @@ test("panel paths on the main domain move to the app domain", async ({ request }
   expect(response.headers()["location"]).toBe(`${APP}/events?tab=guests`);
 });
 
-test("the marketing home on the app domain moves to the main domain", async ({ request }) => {
+test("the app domain home sends a visitor without a session to the login page", async ({
+  request,
+}) => {
   const response = await request.get(`${APP}/`, { maxRedirects: 0 });
-  expect(response.status()).toBe(308);
-  expect(response.headers()["location"]).toBe(`${MAIN}/`);
+  expect(response.status()).toBe(307);
+  expect(response.headers()["location"]).toBe("/login");
 });
 
 test("the short domain is noindex and serves nothing but guest routes", async ({ request }) => {
