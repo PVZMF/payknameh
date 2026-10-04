@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizePhone } from "@/domain/auth/phone";
+import { maskPhoneForDisplay, normalizePhone, type PhoneE164 } from "@/domain/auth/phone";
 
 const E164 = "+989121234567";
 
@@ -36,5 +36,11 @@ describe("normalizePhone", () => {
     "۰۹۱۲۱۲۳۴۵۶۷۸۹",
   ])("rejects %j", (input) => {
     expect(normalizePhone(input)).toEqual({ ok: false, code: "PHONE_INVALID" });
+  });
+});
+
+describe("maskPhoneForDisplay", () => {
+  it("keeps the first four and last four digits of the local form", () => {
+    expect(maskPhoneForDisplay(E164 as PhoneE164)).toBe("0912•••4567");
   });
 });

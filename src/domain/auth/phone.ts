@@ -29,3 +29,9 @@ export function normalizePhone(input: string): Result<PhoneE164, PhoneError> {
   if (!IRANIAN_MOBILE.test(digits)) return err("PHONE_INVALID");
   return ok(`+98${digits}` as PhoneE164);
 }
+
+/** For screens: 0912•••4567, so the host can recognise the number without it being shown. */
+export function maskPhoneForDisplay(phone: PhoneE164): string {
+  const local = `0${phone.slice(3)}`;
+  return `${local.slice(0, 4)}•••${local.slice(-4)}`;
+}
