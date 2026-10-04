@@ -13,7 +13,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
+  reporter: process.env.CI
+    ? [["github"], ["html", { open: "never", outputFolder: "../../playwright-report" }]]
+    : "list",
   use: {
     baseURL: externalBaseUrl ?? `http://localhost:${LOCAL_PORT}`,
     locale: "fa-IR",
