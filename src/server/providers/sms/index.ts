@@ -11,10 +11,13 @@ export type {
 } from "@/server/providers/sms/sms-provider";
 
 /** Builds the provider named by SMS_PROVIDER. The vendor adapter arrives with PK-036 (D-06). */
-export function createSmsProvider(name: Env["SMS_PROVIDER"]): SmsProvider {
+export function createSmsProvider(
+  name: Env["SMS_PROVIDER"],
+  options: { outbox?: string } = {},
+): SmsProvider {
   switch (name) {
     case "console":
-      return new ConsoleSmsProvider();
+      return new ConsoleSmsProvider(undefined, options.outbox);
   }
 }
 
@@ -22,6 +25,7 @@ let provider: SmsProvider | undefined;
 
 /** The process-wide SMS provider. */
 export function getSmsProvider(): SmsProvider {
-  provider ??= createSmsProvider(getEnv().SMS_PROVIDER);
+  const env = getEnv();
+  provider ??= createSmsProvider(env.SMS_PROVIDER, { outbox: env.SMS_CONSOLE_OUTBOX });
   return provider;
 }

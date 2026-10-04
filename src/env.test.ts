@@ -105,6 +105,19 @@ describe("parseEnv", () => {
     );
   });
 
+  it("allows the SMS test outbox only locally", () => {
+    expect(
+      parseEnv(envSchema, { ...VALID, SMS_CONSOLE_OUTBOX: ".e2e/sms.jsonl" }).SMS_CONSOLE_OUTBOX,
+    ).toBe(".e2e/sms.jsonl");
+    expect(() =>
+      parseEnv(envSchema, {
+        ...VALID,
+        APP_ENV: "development",
+        SMS_CONSOLE_OUTBOX: ".e2e/sms.jsonl",
+      }),
+    ).toThrow(/SMS_CONSOLE_OUTBOX/);
+  });
+
   it("validates the migration user URL separately", () => {
     expect(() => parseEnv(migrationEnvSchema, {})).toThrow(/DB_MIGRATE_URL/);
   });
