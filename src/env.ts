@@ -60,6 +60,12 @@ const baseEnvSchema = z.object({
   // the vendor is chosen (Decision D-06, PK-036).
   SMS_PROVIDER: z.enum(["console"]).default("console"),
 
+  // AUTH_: Tech §7.3, OTP codes are stored only as an HMAC with this secret.
+  AUTH_OTP_SECRET: z.string().min(32, "at least 32 characters"),
+  // How many reverse proxies (CDN, load balancer) in front of the app append to
+  // X-Forwarded-For. 0 = none: the value Next.js sets from the socket (local and development).
+  TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
+
   // DB_: the app connects with the least-privilege user (Tech §12).
   DB_URL: postgresUrl,
 
@@ -83,6 +89,15 @@ export const envSchema = baseEnvSchema.superRefine((env, ctx) => {
       code: "custom",
       path: ["SMS_PROVIDER"],
       message: `"console" is only allowed when APP_ENV is local or development`,
+    });
+  }
+  // Next.js keeps an X-Forwarded-For sent by the client, so without a trusted proxy in front
+  // per-IP rate limits could be bypassed. Staging and production must run behind one.
+  if (env.TRUSTED_PROXY_HOPS < 1 && (env.APP_ENV === "staging" || env.APP_ENV === "production")) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["TRUSTED_PROXY_HOPS"],
+      message: "must be at least 1 on staging and production (the app runs behind a proxy)",
     });
   }
 });

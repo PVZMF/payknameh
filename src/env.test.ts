@@ -6,6 +6,7 @@ const VALID = {
   DOMAIN_MAIN: "payknameh.localhost:3000",
   DOMAIN_APP: "app.payknameh.localhost:3000",
   DOMAIN_SHORT: "pk.localhost:3000",
+  AUTH_OTP_SECRET: "local-only-otp-secret-change-me-0123456789",
   DB_URL: "postgres://payknameh_app:secret@localhost:5432/payknameh",
   S3_ENDPOINT: "http://localhost:9000",
   S3_REGION: "us-east-1",
@@ -89,6 +90,19 @@ describe("parseEnv", () => {
     expect(() =>
       parseEnv(envSchema, { ...VALID, APP_ENV: appEnv, SMS_PROVIDER: "console" }),
     ).toThrow(/SMS_PROVIDER/);
+  });
+
+  it("needs an OTP secret of at least 32 characters", () => {
+    expect(() => parseEnv(envSchema, { ...VALID, AUTH_OTP_SECRET: "short" })).toThrow(
+      /AUTH_OTP_SECRET/,
+    );
+  });
+
+  it("trusts no proxy by default and requires one on staging and production", () => {
+    expect(parseEnv(envSchema, VALID).TRUSTED_PROXY_HOPS).toBe(0);
+    expect(() => parseEnv(envSchema, { ...VALID, APP_ENV: "staging" })).toThrow(
+      /TRUSTED_PROXY_HOPS/,
+    );
   });
 
   it("validates the migration user URL separately", () => {
