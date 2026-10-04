@@ -23,12 +23,14 @@
     "db:seed": "tsx --conditions=react-server --env-file-if-exists=.env scripts/db-seed.ts",
     "test:unit": "vitest run --project unit",
     "test:int": "vitest run --project integration",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "worker": "tsx --conditions=react-server --env-file-if-exists=.env worker.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.3",
     "next": "16.3.8",
     "pg": "8.23.1",
+    "pg-boss": "12.36.0",
     "pino": "10.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
