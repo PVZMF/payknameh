@@ -43,10 +43,11 @@ describe("proxy", () => {
     expect(response.headers.get("location")).toBe("https://app.payknameh.ir/events?tab=guests");
   });
 
-  it("redirects marketing paths on the app domain to the main domain", () => {
+  it("serves the panel home for / on the app domain", () => {
     const response = proxy(request("https://app.payknameh.ir/"));
-    expect(response.status).toBe(308);
-    expect(response.headers.get("location")).toBe("https://payknameh.ir/");
+    expect(response.headers.get("x-middleware-rewrite")).toBe(
+      "https://app.payknameh.ir/panel-home",
+    );
   });
 
   it("serves the invitation route on the short domain, noindex and without cookies", () => {

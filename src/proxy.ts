@@ -31,6 +31,10 @@ export function proxy(request: NextRequest): NextResponse {
     target.pathname = request.nextUrl.pathname;
     target.search = request.nextUrl.search;
     response = NextResponse.redirect(target, 308);
+  } else if (decision.action === "rewrite") {
+    const target = request.nextUrl.clone();
+    target.pathname = decision.pathname;
+    response = NextResponse.rewrite(target);
   } else if (decision.action === "not-found") {
     response = new NextResponse("Not Found", { status: 404 });
   } else {

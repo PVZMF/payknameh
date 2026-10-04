@@ -14,7 +14,15 @@ export type PathKind = "shared" | "guest" | "marketing" | "app";
 export type RouteDecision =
   | { action: "next" }
   | { action: "not-found" }
-  | { action: "redirect"; to: Exclude<Surface, "short"> };
+  | { action: "redirect"; to: Exclude<Surface, "short"> }
+  | { action: "rewrite"; pathname: string };
+
+/**
+ * The app domain's home. "/" belongs to the marketing page, so on the app domain it is
+ * rewritten to this page, which sends the host to /events or /login after checking the
+ * session on the server (phase 1 decision).
+ */
+export const PANEL_HOME_PATH = "/panel-home";
 
 // Health probes (Tech §13.6) and Next.js assets are served on every host.
 const SHARED_PATH = /^\/(?:health\/?|_next\/.*)$/;
@@ -52,7 +60,11 @@ export function decideRoute(surface: Surface | null, pathname: string): RouteDec
   // Guest routes exist only on the short domain, so a host cookie can never reach them.
   if (kind === "guest") return surface === "short" ? { action: "next" } : { action: "not-found" };
   if (surface === "short") return { action: "not-found" };
-  if (kind === "marketing")
-    return surface === "main" ? { action: "next" } : { action: "redirect", to: "main" };
+  if (kind === "marketing") {
+    if (surface === "main") return { action: "next" };
+    return pathname === "/"
+      ? { action: "rewrite", pathname: PANEL_HOME_PATH }
+      : { action: "redirect", to: "main" };
+  }
   return surface === "app" ? { action: "next" } : { action: "redirect", to: "app" };
 }

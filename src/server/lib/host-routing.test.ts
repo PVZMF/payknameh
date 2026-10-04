@@ -98,7 +98,7 @@ describe("decideRoute", () => {
   it("keeps marketing on the main domain and the panels on the app domain", () => {
     expect(decideRoute("main", "/")).toEqual({ action: "next" });
     expect(decideRoute("app", "/events")).toEqual({ action: "next" });
-    expect(decideRoute("app", "/")).toEqual({ action: "redirect", to: "main" });
+    expect(decideRoute("app", "/")).toEqual({ action: "rewrite", pathname: "/panel-home" });
     expect(decideRoute("main", "/events")).toEqual({ action: "redirect", to: "app" });
   });
 });

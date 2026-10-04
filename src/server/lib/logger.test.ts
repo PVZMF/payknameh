@@ -49,4 +49,17 @@ describe("getLogger", () => {
     expect(logger.level).toBe("warn");
     vi.doUnmock("@/env");
   });
+
+  it("reads the environment only when the logger is first used", async () => {
+    vi.resetModules();
+    const getEnv = vi.fn(() => ({ LOG_LEVEL: "info", APP_ENV: "local" }));
+    vi.doMock("@/env", () => ({ getEnv }));
+    const { getLogger } = await import("@/server/lib/logger");
+
+    const logger = getLogger("auth");
+    expect(getEnv).not.toHaveBeenCalled();
+    expect(logger.isLevelEnabled("info")).toBe(true);
+    expect(getEnv).toHaveBeenCalled();
+    vi.doUnmock("@/env");
+  });
 });
