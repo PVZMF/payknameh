@@ -35,8 +35,11 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Squash merge makes the PR title the final commit message (Standards §6).
+      # Squash merge makes the PR title the final commit message (Standards §6). Release
+      # PRs (develop → main, "release: vX.Y.Z") and back-merges (main → develop) use merge
+      # commits instead (Standards §4, §9), so their titles never become commits.
       - name: PR title
+        if: github.head_ref != 'develop' && github.head_ref != 'main'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: printf '%s\n' "$PR_TITLE" | pnpm exec commitlint

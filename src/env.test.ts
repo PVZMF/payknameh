@@ -39,6 +39,17 @@ describe("parseEnv", () => {
     );
   });
 
+  it("accepts a staging rc version and treats an empty APP_VERSION as unset", () => {
+    expect(parseEnv(envSchema, { ...VALID, APP_VERSION: "0.1.0-rc.2" }).APP_VERSION).toBe(
+      "0.1.0-rc.2",
+    );
+    expect(parseEnv(envSchema, { ...VALID, APP_VERSION: "" }).APP_VERSION).toBeUndefined();
+  });
+
+  it("throws on an APP_VERSION that is not X.Y.Z or X.Y.Z-rc.N", () => {
+    expect(() => parseEnv(envSchema, { ...VALID, APP_VERSION: "v0.1.0" })).toThrow(/APP_VERSION/);
+  });
+
   it("validates the migration user URL separately", () => {
     expect(() => parseEnv(migrationEnvSchema, {})).toThrow(/DB_MIGRATE_URL/);
   });

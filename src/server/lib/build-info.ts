@@ -19,6 +19,12 @@ function gitCommit(): string {
 
 /** App version and commit for /health and error reports (Standards §5). */
 export function getBuildInfo(): BuildInfo {
-  cached ??= { version: packageJson.version, commit: getEnv().APP_COMMIT ?? gitCommit() };
+  if (!cached) {
+    const env = getEnv();
+    cached = {
+      version: env.APP_VERSION ?? packageJson.version,
+      commit: env.APP_COMMIT ?? gitCommit(),
+    };
+  }
   return cached;
 }

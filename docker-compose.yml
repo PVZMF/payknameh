@@ -67,6 +67,7 @@ services:
         REGISTRY_MIRROR: ${REGISTRY_MIRROR:-docker.io}
         NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
         APP_COMMIT: ${APP_COMMIT:-unknown}
+        APP_VERSION: ${APP_VERSION:-}
     command: ["node", "dist/migrate.mjs"]
     env_file: .env
     environment: &image-env

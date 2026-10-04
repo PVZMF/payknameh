@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 import packageJson from "./package.json" with { type: "json" };
 
+// Standards §5: staging builds pass X.Y.Z-rc.N as APP_VERSION; otherwise package.json wins.
+// Read at build time because headers are fixed into the build output.
+const appVersion = process.env.APP_VERSION || packageJson.version;
+
 const nextConfig: NextConfig = {
   // Tech §2.2: the web app ships as a standalone build inside Docker.
   output: "standalone",
@@ -10,7 +14,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Standards §5: every response carries the app version.
   headers: async () => [
-    { source: "/:path*", headers: [{ key: "X-App-Version", value: packageJson.version }] },
+    { source: "/:path*", headers: [{ key: "X-App-Version", value: appVersion }] },
   ],
   reactStrictMode: true,
 };

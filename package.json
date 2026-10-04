@@ -21,6 +21,7 @@
     "db:generate": "drizzle-kit generate --config src/server/db/drizzle.config.ts",
     "db:migrate": "tsx --conditions=react-server --env-file-if-exists=.env scripts/db-migrate.ts",
     "db:seed": "tsx --conditions=react-server --env-file-if-exists=.env scripts/db-seed.ts",
+    "release:rc-version": "tsx --conditions=react-server scripts/rc-version.ts",
     "test:unit": "vitest run --project unit",
     "test:int": "vitest run --project integration",
     "test:coverage": "vitest run --coverage",
