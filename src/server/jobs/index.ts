@@ -1,4 +1,5 @@
 import type { Job, PgBoss } from "pg-boss";
+import { handlePruneRateLimits } from "@/server/jobs/auth-prune-rate-limits";
 import { handleInfraPing } from "@/server/jobs/infra-ping";
 import { captureUnexpected } from "@/server/lib/error-tracking";
 import type { QueueName } from "@/server/lib/queue";
@@ -6,6 +7,7 @@ import type { QueueName } from "@/server/lib/queue";
 /** Handler for every queue in QUEUES; adding a queue without a handler is a type error. */
 const HANDLERS = {
   "infra.ping": handleInfraPing,
+  "auth.prune-rate-limits": handlePruneRateLimits,
 } satisfies Record<QueueName, unknown>;
 
 /**
@@ -26,6 +28,19 @@ export function reportFailures<T>(
   };
 }
 
+/** Recurring jobs as cron in UTC; pg-boss runs each once per tick across all workers. */
+export const SCHEDULES = [
+  { queue: "auth.prune-rate-limits", cron: "30 0 * * *" },
+] as const satisfies {
+  queue: QueueName;
+  cron: string;
+}[];
+
 export async function registerJobs(boss: PgBoss): Promise<void> {
   await boss.work("infra.ping", reportFailures("infra.ping", HANDLERS["infra.ping"]));
+  await boss.work(
+    "auth.prune-rate-limits",
+    reportFailures("auth.prune-rate-limits", HANDLERS["auth.prune-rate-limits"]),
+  );
+  for (const { queue, cron } of SCHEDULES) await boss.schedule(queue, cron);
 }

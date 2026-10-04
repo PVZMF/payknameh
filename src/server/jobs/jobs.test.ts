@@ -5,15 +5,29 @@ const info = vi.fn();
 vi.mock("@/server/lib/logger", () => ({ getLogger: () => ({ info }) }));
 const captureUnexpected = vi.fn();
 vi.mock("@/server/lib/error-tracking", () => ({ captureUnexpected }));
+const pruneRateLimits = vi.fn().mockResolvedValue(7);
+vi.mock("@/server/services/auth", () => ({ pruneRateLimits }));
 
 const { registerJobs, reportFailures } = await import("@/server/jobs");
 const { handleInfraPing } = await import("@/server/jobs/infra-ping");
 
 describe("registerJobs", () => {
-  it("registers a handler for every queue", async () => {
+  it("registers a handler for every queue and the daily schedules", async () => {
     const work = vi.fn().mockResolvedValue("worker-id");
-    await registerJobs({ work } as unknown as PgBoss);
+    const schedule = vi.fn().mockResolvedValue(undefined);
+    await registerJobs({ work, schedule } as unknown as PgBoss);
     expect(work).toHaveBeenCalledWith("infra.ping", expect.any(Function));
+    expect(work).toHaveBeenCalledWith("auth.prune-rate-limits", expect.any(Function));
+    expect(schedule).toHaveBeenCalledWith("auth.prune-rate-limits", "30 0 * * *");
+  });
+});
+
+describe("handlePruneRateLimits", () => {
+  it("prunes old windows and logs only the count", async () => {
+    const { handlePruneRateLimits } = await import("@/server/jobs/auth-prune-rate-limits");
+    await handlePruneRateLimits();
+    expect(pruneRateLimits).toHaveBeenCalledWith();
+    expect(info).toHaveBeenCalledWith({ deleted: 7 }, "rate limit windows pruned");
   });
 });
 
