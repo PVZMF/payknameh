@@ -71,6 +71,15 @@ describe("parseEnv", () => {
     expect(() => parseEnv(envSchema, { ...VALID, DOMAIN_SHORT: host })).toThrow(/DOMAIN_SHORT/);
   });
 
+  it("treats an empty GLITCHTIP_DSN as unset and needs an http(s) URL otherwise", () => {
+    expect(parseEnv(envSchema, { ...VALID, GLITCHTIP_DSN: "" }).GLITCHTIP_DSN).toBeUndefined();
+    const dsn = "https://key@glitchtip.example/1";
+    expect(parseEnv(envSchema, { ...VALID, GLITCHTIP_DSN: dsn }).GLITCHTIP_DSN).toBe(dsn);
+    expect(() => parseEnv(envSchema, { ...VALID, GLITCHTIP_DSN: "glitchtip" })).toThrow(
+      /GLITCHTIP_DSN/,
+    );
+  });
+
   it("validates the migration user URL separately", () => {
     expect(() => parseEnv(migrationEnvSchema, {})).toThrow(/DB_MIGRATE_URL/);
   });

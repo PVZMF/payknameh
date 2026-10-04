@@ -15,9 +15,10 @@ await build({
   conditions: ["react-server"],
   // pg's optional native binding is never installed.
   external: ["pg-native"],
-  // Bundled CommonJS dependencies still call require().
+  // Bundled CommonJS dependencies still call require(). The alias keeps the banner from
+  // clashing with bundled ESM code that imports createRequire itself (the Sentry SDK does).
   banner: {
-    js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+    js: "import { createRequire as __bannerCreateRequire } from 'node:module'; const require = __bannerCreateRequire(import.meta.url);",
   },
   logLevel: "info",
 });

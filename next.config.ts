@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: import.meta.dirname,
   turbopack: { root: import.meta.dirname },
   poweredByHeader: false,
+  // Loaded from node_modules at runtime, not bundled: the Sentry SDK warns (and would skip
+  // its own setup) when bundled. We use it for error reports only (PK-018).
+  serverExternalPackages: ["@sentry/node"],
   // Standards §5: every response carries the app version.
   headers: async () => [
     { source: "/:path*", headers: [{ key: "X-App-Version", value: appVersion }] },

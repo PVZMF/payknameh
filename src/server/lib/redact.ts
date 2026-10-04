@@ -38,21 +38,22 @@ export function maskPhone(value: string): string {
   return digits.length <= 2 ? "••" : `${"•".repeat(digits.length - 2)}${digits.slice(-2)}`;
 }
 
-function redactString(value: string): string {
+/** Masks phone numbers and invite tokens inside free text (messages, URLs, stack traces). */
+export function redactText(value: string): string {
   return value.replace(INVITE_PATH, "/i/[REDACTED]").replace(PHONE_PATTERN, maskPhone);
 }
 
 /** Returns a copy of a log value with personal data removed or masked. */
 export function redact(value: unknown, depth = 0): unknown {
   if (depth > 8) return "[TRUNCATED]";
-  if (typeof value === "string") return redactString(value);
+  if (typeof value === "string") return redactText(value);
   if (Array.isArray(value)) return value.map((item) => redact(item, depth + 1));
   if (value instanceof Error) {
     // The stack's first line repeats the message, so it needs the same masking.
     return {
       type: value.name,
-      message: redactString(value.message),
-      stack: value.stack === undefined ? undefined : redactString(value.stack),
+      message: redactText(value.message),
+      stack: value.stack === undefined ? undefined : redactText(value.stack),
     };
   }
   if (value === null || typeof value !== "object") return value;
