@@ -72,4 +72,29 @@ describe("proxy", () => {
     expect(proxy(request("https://evil.example/")).status).toBe(404);
     expect(proxy(request("https://10.0.0.5/health")).headers.get("x-middleware-next")).toBe("1");
   });
+
+  it("puts the security headers and a fresh CSP nonce on every response", () => {
+    const first = proxy(request("https://payknameh.ir/"));
+    const second = proxy(request("https://payknameh.ir/"));
+    const csp = first.headers.get("content-security-policy") ?? "";
+    expect(csp).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/);
+    expect(csp).not.toBe(second.headers.get("content-security-policy"));
+    expect(forwarded(first, "content-security-policy")).toBe(csp);
+    expect(first.headers.get("strict-transport-security")).toContain("max-age=");
+    expect(first.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(proxy(request("https://pk.ir/nothing")).headers.get("x-frame-options")).toBe("DENY");
+  });
+
+  it("refuses a state-changing request from another origin", () => {
+    const post = (origin: string | null) =>
+      proxy(
+        new NextRequest("https://app.payknameh.ir/events", {
+          method: "POST",
+          headers: { host: "app.payknameh.ir", ...(origin ? { origin } : {}) },
+        }),
+      );
+    expect(post("https://evil.example").status).toBe(403);
+    expect(post(null).status).toBe(403);
+    expect(post("https://app.payknameh.ir").headers.get("x-middleware-next")).toBe("1");
+  });
 });
