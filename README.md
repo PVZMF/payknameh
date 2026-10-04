@@ -5,7 +5,7 @@ manage the event, and a guest PWA with a personal invitation and per-session RSV
 
 - Product and architecture decisions: [`docs/specs/`](docs/specs/) (MVP, Technical Architecture, Coding Standards)
 - Working rules for this repo: [`CLAUDE.md`](CLAUDE.md)
-- Developer guides (Persian): [`docs/guides/`](docs/guides/) · decisions: [`docs/adr/`](docs/adr/)
+- Developer guides (Persian): [`docs/guides/`](docs/guides/)
 
 ## Local setup
 
