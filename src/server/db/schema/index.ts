@@ -1,2 +1,4 @@
-// Drizzle schema entry point. Module tables are added here as they land (first: PK-023).
-export {};
+// Drizzle schema entry point: every module's tables are exported here.
+export * from "@/server/db/schema/event";
+export * from "@/server/db/schema/event-members";
+export * from "@/server/db/schema/org";

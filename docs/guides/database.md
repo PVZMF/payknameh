@@ -14,13 +14,14 @@ Drizzle روی PostgreSQL با درایور `pg` استفاده می‌شود؛ 
 
 ## فایل‌ها
 
-| مسیر                              | نقش                                                        |
-| --------------------------------- | ---------------------------------------------------------- |
-| `src/server/db/drizzle.config.ts` | تنظیمات drizzle-kit                                        |
-| `src/server/db/client.ts`         | `getDb()` و `getPool()` با کاربر برنامه (`DB_URL`)         |
-| `src/server/db/schema/index.ts`   | نقطه‌ی ورود schema؛ جدول‌های هر ماژول اینجا export می‌شوند |
-| `src/server/db/columns.ts`        | ستون‌های مشترک: `id()`، `timestamptz()`، `timestamps`      |
-| `src/server/db/migrations/`       | مایگریشن‌های تولیدشده؛ بعد از ادغام ویرایش نمی‌شوند        |
+| مسیر                               | نقش                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------- |
+| `src/server/db/drizzle.config.ts`  | تنظیمات drizzle-kit                                                       |
+| `src/server/db/client.ts`          | `getDb()` و `getPool()` با کاربر برنامه (`DB_URL`)                        |
+| `src/server/db/schema/index.ts`    | نقطه‌ی ورود schema؛ جدول‌های هر ماژول اینجا export می‌شوند                |
+| `src/server/db/schema/<module>.ts` | جدول‌های هر ماژول؛ مستند هر جدول در `docs/modules/<module>/data-model.md` |
+| `src/server/db/columns.ts`         | ستون‌های مشترک: `id()`، `timestamptz()`، `timestamps`، `version()`        |
+| `src/server/db/migrations/`        | مایگریشن‌های تولیدشده؛ بعد از ادغام ویرایش نمی‌شوند                       |
 
 ## دستورها
 

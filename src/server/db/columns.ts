@@ -1,4 +1,4 @@
-import { timestamp, uuid } from "drizzle-orm/pg-core";
+import { integer, timestamp, uuid } from "drizzle-orm/pg-core";
 import { uuidv7 } from "@/server/db/uuidv7";
 
 // Tech §7.2 conventions shared by every table. Tables are snake_case plural; the client
@@ -22,3 +22,6 @@ export const timestamps = {
     .defaultNow()
     .$onUpdateFn(() => new Date()),
 };
+
+/** Tech §7.2: optimistic locking for entities several people or tabs may edit at once. */
+export const version = () => integer().notNull().default(1);
