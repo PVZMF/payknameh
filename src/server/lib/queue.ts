@@ -17,6 +17,8 @@ export const QUEUE_SCHEMA = "pgboss";
 export const QUEUES = [
   // Sample job proving the worker path end to end; real jobs arrive with their modules.
   { name: "infra.ping", policy: "exclusive", retryLimit: 3 },
+  // Daily clean-up of old rate-limit windows (Tech §7.6); scheduled by the worker.
+  { name: "auth.prune-rate-limits", policy: "exclusive", retryLimit: 2 },
 ] as const satisfies readonly Queue[];
 
 export type QueueName = (typeof QUEUES)[number]["name"];
