@@ -5,3 +5,4 @@ export {
   type RateLimitDecision,
   type RateLimitRule,
 } from "@/server/services/auth/rate-limit";
+export { requestOtp, type RequestOtpResult } from "@/server/services/auth/request-otp";
