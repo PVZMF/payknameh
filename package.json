@@ -17,10 +17,13 @@
     "format:check": "prettier --check .",
     "prepare": "husky",
     "test": "vitest run",
-    "test:watch": "vitest",
+    "test:watch": "vitest --project unit",
     "db:generate": "drizzle-kit generate --config src/server/db/drizzle.config.ts",
     "db:migrate": "tsx --conditions=react-server --env-file-if-exists=.env scripts/db-migrate.ts",
-    "db:seed": "tsx --conditions=react-server --env-file-if-exists=.env scripts/db-seed.ts"
+    "db:seed": "tsx --conditions=react-server --env-file-if-exists=.env scripts/db-seed.ts",
+    "test:unit": "vitest run --project unit",
+    "test:int": "vitest run --project integration",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "drizzle-orm": "0.45.3",
@@ -39,6 +42,7 @@
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@vitest/coverage-v8": "5.0.3",
     "drizzle-kit": "0.31.11",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.8",
