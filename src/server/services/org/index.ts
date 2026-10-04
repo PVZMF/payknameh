@@ -5,3 +5,4 @@ export {
   type AuditEntry,
 } from "@/server/services/org/record-audit";
 export { ensureHostAccount } from "@/server/services/org/ensure-host-account";
+export { requireEventAccess, type EventAccess } from "@/server/services/org/require-event-access";

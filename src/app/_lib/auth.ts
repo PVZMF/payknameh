@@ -1,5 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import type { Actor } from "@/domain/org/actor";
 import { getEnv } from "@/env";
 import { resolveSession } from "@/server/services/auth";
 
@@ -11,6 +13,16 @@ export const SESSION_COOKIE = "pk_session";
 export async function getCurrentUser(): Promise<{ userId: string; sessionId: string } | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   return token ? resolveSession(token) : null;
+}
+
+/**
+ * The host actor for a panel page or Server Action (Tech §7.1). Without a valid session the
+ * request ends here with a server-side redirect to the login page.
+ */
+export async function requireHost(): Promise<Extract<Actor, { type: "host" }>> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  return { type: "host", userId: user.userId };
 }
 
 export async function setSessionCookie(token: string, expiresAt: Date): Promise<void> {
