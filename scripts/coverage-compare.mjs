@@ -20,7 +20,9 @@ const baseline = linesPct(baselinePath);
 const current = linesPct(currentPath);
 const drop = Math.round((baseline - current) * 100) / 100;
 
-console.log(`Line coverage: develop ${baseline}% → this PR ${current}% (drop ${drop} pp, max ${MAX_DROP})`);
+console.log(
+  `Line coverage: develop ${baseline}% → this PR ${current}% (drop ${drop} pp, max ${MAX_DROP})`,
+);
 if (drop > MAX_DROP) {
   console.error(`Coverage dropped ${drop} pp, more than the allowed ${MAX_DROP} pp.`);
   process.exit(1);
