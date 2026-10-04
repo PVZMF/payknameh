@@ -5,12 +5,12 @@ owner: mhmoghadamfar
 status: active
 version: 1.0
 updated: 1405-07-13
-refs: [MVP §5, Tech §7.2, Tech §8, Business §9.1]
+refs: [MVP §5, Tech §7.2, Tech §8, Tech §11, Business §7, Business §9.1]
 ---
 
 # مدل داده‌ی ماژول org
 
-فایل‌ها: `src/server/db/schema/org.ts`، `src/server/db/schema/event-members.ts`. مایگریشن: `0001_foundation`.
+فایل‌ها: `src/server/db/schema/org.ts`، `src/server/db/schema/event-members.ts`. مایگریشن‌ها: `0001_foundation`، `0003_audit_logs`.
 
 ## organizations
 
@@ -57,3 +57,23 @@ refs: [MVP §5, Tech §7.2, Tech §8, Business §9.1]
 | `created_at` | timestamptz                        |                                       |
 
 کلید اصلی: (`event_id`, `user_id`).
+
+## audit_logs
+
+ثبت فقط‌افزودنی کارهای حساس (Tech §8، §11؛ Business §7): چرخش یا ابطال توکن، INVITED به EXCLUDED، حذف Session، تغییر زمان یا مکان، دسترسی تیم. نوشتن با `recordAudit()` در `src/server/services/org`، داخل همان تراکنش کار.
+
+| ستون                       | نوع                                            | قاعده                                                                       |
+| -------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------- |
+| `id`                       | uuid (v7)                                      | کلید                                                                        |
+| `actor_type`               | `audit_actor_type`: HOST، GUEST، STAFF، SYSTEM |                                                                             |
+| `actor_id`                 | uuid                                           | کاربر برای HOST و STAFF، خانوار برای GUEST، خالی برای SYSTEM                |
+| `action`                   | text                                           | `module.verb-past`، مثل `guest.token-rotated`؛ CHECK قالب                   |
+| `entity_type`، `entity_id` | text، uuid                                     |                                                                             |
+| `event_id`                 | uuid                                           | بدون FK عمدی: حذف رویداد نباید ردیف ممیزی را تغییر دهد یا جلوی حذف را بگیرد |
+| `reason`                   | text                                           | برای STAFF الزامی (CHECK `audit_logs_staff_reason`)                         |
+| `created_at`               | timestamptz                                    |                                                                             |
+
+ایندکس: (`event_id`, `created_at`).
+
+- **فقط‌افزودنی:** تریگر `audit_logs_reject_change` هر UPDATE، DELETE و TRUNCATE را با خطای `42501` رد می‌کند؛ برای همه‌ی نقش‌ها، چون نام نقش برنامه در هر محیط فرق دارد.
+- **بدون داده‌ی شخصی:** فقط شناسه‌ها؛ نام، شماره و متن پیام در این جدول نمی‌آید.

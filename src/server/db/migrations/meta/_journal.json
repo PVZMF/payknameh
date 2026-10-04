@@ -22,6 +22,13 @@
       "when": 1791151233474,
       "tag": "0002_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791151433638,
+      "tag": "0003_audit_logs",
+      "breakpoints": true
     }
   ]
 }
