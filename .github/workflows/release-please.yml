@@ -1,0 +1,28 @@
+# Standards §4, §5, §9: versions and CHANGELOG come from Conventional Commits, never by hand.
+# Runs on main (staging). It keeps one version PR open; merging it bumps package.json,
+# writes CHANGELOG.md and creates tag vX.Y.Z, the only trigger for a production release.
+# One MINOR per phase: the version PR stays open for the whole phase and is merged at its end.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Version PR and tag
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          target-branch: main
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

@@ -26,16 +26,21 @@ COPY package.json pnpm-lock.yaml .npmrc ./
 RUN corepack install && pnpm install --frozen-lockfile
 
 FROM deps AS build
+# Staging passes X.Y.Z-rc.N (pnpm release:rc-version); empty means "use package.json".
+# Needed at build time too: X-App-Version is fixed into the Next.js build output.
+ARG APP_VERSION=
+ENV APP_VERSION=${APP_VERSION}
 COPY . .
 RUN pnpm build && pnpm build:worker
 
 FROM ${REGISTRY_MIRROR}/${NODE_IMAGE} AS runtime
-ARG APP_VERSION=0.0.0
+ARG APP_VERSION=
 ARG APP_COMMIT=unknown
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
+    APP_VERSION=${APP_VERSION} \
     APP_COMMIT=${APP_COMMIT}
 LABEL org.opencontainers.image.title="payknameh" \
       org.opencontainers.image.version="${APP_VERSION}" \
