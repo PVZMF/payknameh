@@ -21,7 +21,7 @@ refs: [MVP §5, Tech §7.2, Tech §8, Tech §11, Business §7, Business §9.1]
 | `type`                     | `organization_type`: PERSONAL، PROFESSIONAL | پیش‌فرض PERSONAL (Business §9.1) |
 | `created_at`، `updated_at` | timestamptz                                 |                                  |
 
-سازمان شخصی هنگام اولین ورود ساخته می‌شود (PK-028) و UI ندارد (MVP §5).
+سازمان شخصی هنگام اولین ورود ساخته می‌شود و UI ندارد (MVP §5): `ensureHostAccount()` در `src/server/services/org` کاربر، سازمان PERSONAL و عضویت OWNER را در تراکنش تأیید کد می‌سازد (PK-028).
 
 ## users
 

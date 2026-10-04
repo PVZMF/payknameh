@@ -1,6 +1,6 @@
 import { getTableConfig, type PgTable } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { eventMembers, events, organizationMembers } from "@/server/db/schema";
+import { authSessions, eventMembers, events, organizationMembers } from "@/server/db/schema";
 
 /** Each foreign key as "column → table.column (on delete …)", with TypeScript column keys. */
 function foreignKeys(table: PgTable): string[] {
@@ -30,5 +30,9 @@ describe("foundation foreign keys", () => {
       "eventId → events.id (on delete cascade)",
       "userId → users.id (on delete cascade)",
     ]);
+  });
+
+  it("sessions disappear with their user", () => {
+    expect(foreignKeys(authSessions)).toEqual(["userId → users.id (on delete cascade)"]);
   });
 });
