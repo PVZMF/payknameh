@@ -1,9 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import { LOCAL_DOMAINS, LOCAL_PORT } from "./local-domains";
 
 // Tech §14.1–14.2: end-to-end runs on mobile widths first. Locally Playwright starts the
 // dev server; set E2E_BASE_URL to run the same suite against staging.
 const externalBaseUrl = process.env.E2E_BASE_URL;
-const LOCAL_PORT = 3100;
 
 const mobile = devices["Pixel 7"];
 
@@ -17,7 +17,7 @@ export default defineConfig({
     ? [["github"], ["html", { open: "never", outputFolder: "../../playwright-report" }]]
     : "list",
   use: {
-    baseURL: externalBaseUrl ?? `http://localhost:${LOCAL_PORT}`,
+    baseURL: externalBaseUrl ?? `http://${LOCAL_DOMAINS.DOMAIN_MAIN}`,
     locale: "fa-IR",
     timezoneId: "Asia/Tehran",
     trace: "retain-on-failure",
@@ -35,6 +35,7 @@ export default defineConfig({
     : {
         command: `pnpm dev --port ${LOCAL_PORT}`,
         url: `http://localhost:${LOCAL_PORT}/health`,
+        env: LOCAL_DOMAINS,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
       },

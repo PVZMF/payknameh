@@ -41,7 +41,7 @@ If Docker Hub or npm is unreachable (e.g. from Iran), set `REGISTRY_MIRROR` and 
 Two terminals:
 
 ```bash
-pnpm dev        # app on http://localhost:3000 (Persian, right-to-left, Vazirmatn font)
+pnpm dev        # site on http://payknameh.localhost:3000, panels on http://app.payknameh.localhost:3000
 pnpm worker     # background jobs; health on http://localhost:3001/health
 ```
 
