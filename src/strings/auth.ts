@@ -20,6 +20,10 @@ export const AUTH_STRINGS = {
   resendIn: (seconds: string) => `ارسال دوباره تا ${seconds} ثانیه‌ی دیگر`,
   changePhone: "تغییر شماره",
 
+  account: "حساب",
+  logout: "خروج",
+  logoutEverywhere: "خروج از همه‌ی دستگاه‌ها",
+
   errors: {
     PHONE_INVALID: "شماره‌ی موبایل درست نیست. شماره را مثل ۰۹۱۲۱۲۳۴۵۶۷ وارد کنید.",
     OTP_RATE_LIMITED: (seconds: string) =>
