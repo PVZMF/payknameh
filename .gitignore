@@ -30,3 +30,6 @@ blob-report/
 !.vscode/extensions.json
 .idea/
 dist/
+
+# end-to-end scratch (test SMS outbox)
+.e2e/

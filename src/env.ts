@@ -59,6 +59,9 @@ const baseEnvSchema = z.object({
   // SMS_: provider behind the SmsProvider interface (Tech §7.8). Only "console" exists until
   // the vendor is chosen (Decision D-06, PK-036).
   SMS_PROVIDER: z.enum(["console"]).default("console"),
+  // Test only: the console provider also appends each message to this file (JSON lines), so
+  // end-to-end tests can read the login code. Allowed only with APP_ENV=local.
+  SMS_CONSOLE_OUTBOX: optional(z.string().min(1)),
 
   // AUTH_: Tech §7.3, OTP codes are stored only as an HMAC with this secret.
   AUTH_OTP_SECRET: z.string().min(32, "at least 32 characters"),
@@ -89,6 +92,13 @@ export const envSchema = baseEnvSchema.superRefine((env, ctx) => {
       code: "custom",
       path: ["SMS_PROVIDER"],
       message: `"console" is only allowed when APP_ENV is local or development`,
+    });
+  }
+  if (env.SMS_CONSOLE_OUTBOX && env.APP_ENV !== "local") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["SMS_CONSOLE_OUTBOX"],
+      message: "only allowed when APP_ENV is local (it writes login codes to a file)",
     });
   }
   // Next.js keeps an X-Forwarded-For sent by the client, so without a trusted proxy in front

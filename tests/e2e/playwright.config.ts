@@ -1,11 +1,15 @@
 import { defineConfig, devices } from "@playwright/test";
-import { LOCAL_DOMAINS, LOCAL_PORT } from "./local-domains";
+import { mkdirSync } from "node:fs";
+import { LOCAL_DOMAINS, LOCAL_PORT, SMS_OUTBOX } from "./local-domains";
 
 // Tech §14.1–14.2: end-to-end runs on mobile widths first. Locally Playwright starts the
 // dev server; set E2E_BASE_URL to run the same suite against staging.
 const externalBaseUrl = process.env.E2E_BASE_URL;
 
 const mobile = devices["Pixel 7"];
+
+// The dev server runs from the repo root, so the outbox path is relative to it.
+mkdirSync(".e2e", { recursive: true });
 
 export default defineConfig({
   testDir: ".",
@@ -35,7 +39,7 @@ export default defineConfig({
     : {
         command: `pnpm dev --port ${LOCAL_PORT}`,
         url: `http://localhost:${LOCAL_PORT}/health`,
-        env: LOCAL_DOMAINS,
+        env: { ...LOCAL_DOMAINS, SMS_CONSOLE_OUTBOX: SMS_OUTBOX },
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
       },

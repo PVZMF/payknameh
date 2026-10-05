@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { LOCAL_DOMAINS } from "./local-domains";
+import { LOCAL_DOMAINS, uniqueClientIp } from "./local-domains";
 
 // PK-030: the login pages on the app domain. The full sign-up path (reading the code) is
 // PK-038; here the pages, errors and the step to the code page.
@@ -8,6 +8,7 @@ test.skip(Boolean(process.env.E2E_BASE_URL), "uses the local *.localhost hosts")
 const APP = `http://${LOCAL_DOMAINS.DOMAIN_APP}`;
 
 test("a host asks for a code and reaches the code page", async ({ page }) => {
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": uniqueClientIp() });
   await page.goto(`${APP}/login`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("ورود به پیک‌نامه");
 

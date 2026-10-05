@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { appendFileSync } from "node:fs";
 import type { PhoneE164 } from "@/domain/auth/phone";
 import { countSmsSegments } from "@/domain/delivery/sms-segments";
 import { ok, type Result } from "@/domain/shared/result";
@@ -27,6 +28,8 @@ export class ConsoleSmsProvider implements SmsProvider {
 
   constructor(
     private readonly print: (line: string) => void = (line) => process.stdout.write(`${line}\n`),
+    /** Test only (SMS_CONSOLE_OUTBOX, APP_ENV=local): file that receives every message. */
+    private readonly outbox?: string,
   ) {}
 
   sendOtp(input: {
@@ -36,6 +39,7 @@ export class ConsoleSmsProvider implements SmsProvider {
   }): Promise<Result<SmsSent, SmsSendError>> {
     return this.send(input.idempotencyKey, AUTH_STRINGS.otpSms(input.code), () => {
       this.print(`[ConsoleSmsProvider] login code for ${maskPhone(input.to)}: ${input.code}`);
+      this.writeOutbox({ kind: "otp", to: input.to, code: input.code });
     });
   }
 
@@ -46,12 +50,17 @@ export class ConsoleSmsProvider implements SmsProvider {
   }): Promise<Result<SmsSent, SmsSendError>> {
     return this.send(input.idempotencyKey, input.text, () => {
       this.print(`[ConsoleSmsProvider] invitation for ${maskPhone(input.to)}:\n${input.text}`);
+      this.writeOutbox({ kind: "invitation", to: input.to, text: input.text });
     });
   }
 
   getStatus(providerMessageId: string): Promise<SmsDeliveryStatus> {
     const known = [...this.sent.values()].some((s) => s.providerMessageId === providerMessageId);
     return Promise.resolve(known ? "DELIVERED" : "UNKNOWN");
+  }
+
+  private writeOutbox(message: Record<string, string>): void {
+    if (this.outbox) appendFileSync(this.outbox, `${JSON.stringify(message)}\n`);
   }
 
   private send(

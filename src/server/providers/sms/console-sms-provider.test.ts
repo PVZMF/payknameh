@@ -1,3 +1,6 @@
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { PhoneE164 } from "@/domain/auth/phone";
 
@@ -53,6 +56,21 @@ describe("ConsoleSmsProvider", () => {
     if (!result.ok) throw new Error("send failed");
     expect(await sms.getStatus(result.value.providerMessageId)).toBe("DELIVERED");
     expect(await sms.getStatus("console-other")).toBe("UNKNOWN");
+  });
+
+  it("appends every message to the test outbox when one is set", async () => {
+    const outbox = join(mkdtempSync(join(tmpdir(), "pk-sms-")), "outbox.jsonl");
+    const sms = new ConsoleSmsProvider(() => undefined, outbox);
+    await sms.sendOtp({ to: TO, code: "555555", idempotencyKey: "o-1" });
+    await sms.sendInvitation({ to: TO, text: "سلام", idempotencyKey: "o-2" });
+    const lines = readFileSync(outbox, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as unknown);
+    expect(lines).toEqual([
+      { kind: "otp", to: TO, code: "555555" },
+      { kind: "invitation", to: TO, text: "سلام" },
+    ]);
   });
 
   it("writes to stdout by default", async () => {
