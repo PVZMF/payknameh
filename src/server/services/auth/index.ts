@@ -9,3 +9,4 @@ export { requestOtp, type RequestOtpResult } from "@/server/services/auth/reques
 export { createSession, hashSessionToken, resolveSession } from "@/server/services/auth/session";
 export { verifyOtp, type VerifyOtpResult } from "@/server/services/auth/verify-otp";
 export { describeChallenge, resendOtp } from "@/server/services/auth/login-challenge";
+export { revokeAllSessions, revokeSession } from "@/server/services/auth/logout";

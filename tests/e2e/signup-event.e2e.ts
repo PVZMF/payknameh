@@ -65,4 +65,13 @@ test("a new host signs up with an SMS code and creates an event", async ({ page,
   // Back at the panel's home the session is recognised on the server.
   await page.goto(`${APP}/`);
   await expect(page).toHaveURL(`${APP}/events`, NAVIGATION);
+
+  // PK-029: logging out revokes the session; the old cookie no longer opens the panel.
+  const token = (await context.cookies(APP)).find((c) => c.name === "pk_session")?.value ?? "";
+  await page.getByText("حساب").click();
+  await page.getByRole("button", { name: "خروج", exact: true }).click();
+  await expect(page).toHaveURL(`${APP}/login`, NAVIGATION);
+  await context.addCookies([{ name: "pk_session", value: token, url: APP }]);
+  await page.goto(`${APP}/events`);
+  await expect(page).toHaveURL(`${APP}/login`);
 });
