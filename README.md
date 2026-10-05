@@ -30,7 +30,7 @@ cp .env.example .env            # local sample values only
 docker compose up -d --wait     # PostgreSQL + MinIO, healthy
 pnpm install
 pnpm db:migrate                 # schema + job queue, run as the migrator user
-pnpm db:seed                    # sample data (fills up from PK-037)
+pnpm db:seed                    # sample host + event; log in with 09000000001 (code in the dev terminal)
 ```
 
 If Docker Hub or npm is unreachable (e.g. from Iran), set `REGISTRY_MIRROR` and `NPM_REGISTRY` in

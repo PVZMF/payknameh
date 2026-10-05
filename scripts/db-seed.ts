@@ -1,4 +1,18 @@
-// Seed data (Standards §3): one complete event with sessions, a guest tree and responses.
-// It needs the module tables, so the real seed lands with PK-037; this keeps `pnpm db:seed`
-// in the setup flow from day one.
-console.log("Nothing to seed yet (seed data arrives with PK-037).");
+// `pnpm db:seed` (Standards §3): sample data for local, development and staging; never for
+// production, which only ever holds real data.
+import { getEnv } from "@/env";
+import { closeDb } from "@/server/db/client";
+import { seedDatabase } from "./seed/seed-database";
+
+if (getEnv().APP_ENV === "production") {
+  console.error("Refusing to seed production: it only holds real data (Standards §3).");
+  process.exit(1);
+}
+
+const result = await seedDatabase();
+console.log(
+  result.created
+    ? `Seeded host ${result.userId} with event ${result.eventId}. Log in locally with 09000000001.`
+    : "Seed data already present; nothing changed.",
+);
+await closeDb();
