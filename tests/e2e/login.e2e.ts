@@ -36,3 +36,10 @@ test("the code page without a valid challenge goes back to the phone step", asyn
   await page.goto(`${APP}/login/verify?c=not-a-challenge`);
   await expect(page).toHaveURL(`${APP}/login`);
 });
+
+test("the events pages send a visitor without a session to the login page", async ({ page }) => {
+  for (const path of ["/events", "/events/new", "/events/0190e3a0-0000-7000-8000-000000000001"]) {
+    await page.goto(`${APP}${path}`);
+    await expect(page).toHaveURL(`${APP}/login`);
+  }
+});
